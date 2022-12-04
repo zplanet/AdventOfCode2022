@@ -52,7 +52,7 @@ let calcResult = function
 input
 |> Seq.map (parseRound toRPS toRPS)
 |> Seq.map (fun round -> calcScore(round) + calcChoice(round))
-|> Seq.fold (fun acc v -> acc + v) 0
+|> Seq.sum
 |> printfn "Part 1: %A"
 
 // Part 2
@@ -60,5 +60,5 @@ input
 |> Seq.map (parseRound toRPS toResult)
 |> Seq.map calcResult
 |> Seq.map (fun round -> calcScore(round) + calcChoice(round))
-|> Seq.fold (fun acc v -> acc + v) 0
+|> Seq.sum
 |> printfn "Part 2: %A"
