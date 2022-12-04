@@ -30,9 +30,9 @@ let calcPriority (c: char)=
     then n - (int 'A') + 27
     else n - (int 'a') + 1
 
-let toPriority =
+let toPriority calcFunc =
     function
-    | Some c -> calcPriority c
+    | Some c -> calcFunc c
     | None -> 0
 
 let initMap m c = 
@@ -64,7 +64,7 @@ let findSharedItemTypeInGroup (first::second::third::[]) =
 input
 |> Seq.map toRucksack
 |> Seq.map findSharedItemType
-|> Seq.map toPriority
+|> Seq.map (toPriority calcPriority)
 |> Seq.sum
 |> printfn "Part 1: %A"
 
