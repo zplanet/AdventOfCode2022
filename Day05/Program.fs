@@ -86,16 +86,15 @@ let folder2 cs (p: Procedure) =
     let (pvs, pmap) = pop2 p.Count p.From cs
     push2 pvs p.To pmap
 
-procedures
-|> Seq.fold folder crates
-|> Map.toList
-|> List.map (fun (_, list) -> string (List.head list))
-|> List.fold (fun acc s -> acc + s) ""
+let run fldr = 
+    procedures
+    |> Seq.fold fldr crates
+    |> Map.toList
+    |> List.map (fun (_, list) -> string (List.head list))
+    |> List.fold (fun acc s -> acc + s) ""
+
+run folder
 |> printfn "Part 1: %A"
 
-procedures
-|> Seq.fold folder2 crates
-|> Map.toList
-|> List.map (fun (_, list) -> string (List.head list))
-|> List.fold (fun acc s -> acc + s) ""
+run folder2
 |> printfn "Part 2: %A"
