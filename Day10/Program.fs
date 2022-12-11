@@ -31,6 +31,7 @@ let rec toInstructions lines =
     }
 
 let instructions = input |> toInstructions
+
 let cycles = Seq.initInfinite (fun index -> index + 1)
 
 let rec loop registerX cycles instructions =
@@ -58,3 +59,11 @@ let registerXs = loop 1 cycles instructions
 |> (fun (_, ls, _) -> List.rev ls)
 |> List.sum
 |> printfn "Part1: %A"
+
+let draw (i, (_, n)) = if (i - 2) < n && n < (i + 2) then "#" else " "
+
+registerXs
+|> Seq.groupBy (fun (i, n) -> (i - 1) / 40)
+|> Seq.map (snd >> Seq.toList >> List.indexed >> List.map draw >> (String.concat ""))
+|> Seq.toList
+|> printfn "Part2: \n%A"
