@@ -13,27 +13,22 @@ type Monkey = {
     InspectionCount: int;
 }
 
-let monkeys =
+let parseMonkeys makeCalcWorryLevel =
     let pattern = "Monkey ([0-9]+):[^S]+Starting items: ([0-9 ,]+)[^O]+Operation: new = old ([*+]) (old|[0-9]+)[^T]+Test: divisible by ([0-9]+)[^I]+If true: throw to monkey ([0-9]+)[^I]+If false: throw to monkey ([0-9]+)"
     let matches = Regex.Matches (input, pattern, RegexOptions.Multiline)
 
     let test divisor trueVal falseVal dividend = if dividend % divisor = 0 then trueVal else falseVal
     let makeTest divisor trueVal falseVal = test divisor trueVal falseVal
 
-    let add a b = a + b
-    let mul a b = a * b
-    let calcWorryLevel f fb a = (f a (fb a)) / 3
-    let makeCalcWorryLevel f fb = calcWorryLevel f fb
-
     let createMonkey (m: Match) =
         let monkeyId = int m.Groups[1].Value
         let items = m.Groups[2].Value.Split(", ") |> Array.map int |> Array.toList
         let calcWorryLevel =
             match m.Groups[3].Value, m.Groups[4].Value with
-            | operator, operand when operator = "+" && operand = "old" -> makeCalcWorryLevel add id
-            | operator, operand when operator = "*" && operand = "old" -> makeCalcWorryLevel mul id
-            | operator, operand when operator = "+" -> makeCalcWorryLevel add (fun _ -> int operand)
-            | _, operand -> makeCalcWorryLevel mul (fun _ -> int operand)
+            | operator, operand when operator = "+" && operand = "old" -> makeCalcWorryLevel (+) id
+            | operator, operand when operator = "*" && operand = "old" -> makeCalcWorryLevel (*) id
+            | operator, operand when operator = "+" -> makeCalcWorryLevel (+) (fun _ -> int operand)
+            | _, operand -> makeCalcWorryLevel (*) (fun _ -> int operand)
         let divisor = int m.Groups[5].Value
         let monkeyIdTrue = int m.Groups[6].Value
         let monkeyIdFalse = int m.Groups[7].Value
@@ -46,8 +41,8 @@ let monkeys =
             Map.add monkey.Id monkey map)
         Map.empty
 
-let processRound (map: Map<int, Monkey>) round =
-    let id = round % monkeys.Count
+let inspect (map: Map<int, Monkey>) index =
+    let id = index % map.Count
     let monkey = Map.find id map
     let worryLevels =
         monkey.Items
@@ -69,12 +64,17 @@ let processRound (map: Map<int, Monkey>) round =
         | Some m -> Some { m with Items = []; InspectionCount = m.InspectionCount + (List.length worryLevels) }
         | None -> None)
 
-let rounds n = [1 .. n] |> List.map (fun _ -> [0 .. (monkeys.Count - 1)]) |> List.collect id
+let makeCalcWorryLevel f fb = (fun a -> (f a (fb a)) / 3)
+let makeCalcWorryLevel2 (f: uint64 -> uint64 -> uint64) (fb: uint64 -> uint64) = (fun a -> f a (fb a))
 
-rounds 20
-|> List.fold processRound monkeys
+let processRound (monkeys: Map<int, Monkey>) _ = 
+    [0 .. (monkeys.Count - 1)]
+    |> List.fold inspect monkeys
+
+[1..20]
+|> List.fold processRound (parseMonkeys makeCalcWorryLevel)
 |> Map.toList
 |> List.sortByDescending (fun (_, m) -> m.InspectionCount)
 |> List.take 2
 |> List.fold (fun acc (_, m) -> acc * m.InspectionCount) 1
-|> printfn "%A"
+|> printfn "Part1: %A"
