@@ -2,7 +2,7 @@
 open System.Text.RegularExpressions
 
 let input =
-    Path.Combine(Directory.GetCurrentDirectory(), "input.txt")
+    Path.Combine(Directory.GetCurrentDirectory(), "input.test.txt")
     |> File.ReadLines
 
 let calcDistance (x1, y1) (x2, y2) = abs(x1 - x2) + abs (y1 - y2)
@@ -27,13 +27,10 @@ let sensorsWithDistance =
     sensorsWithBeacon
     |> List.map (fun (sensor, beacon) -> (sensor, calcDistance sensor beacon))
 
-let beacons = 
+let beaconsInY targetY =
     sensorsWithBeacon
     |> List.map snd
     |> List.fold (fun acc pos -> Set.add pos acc) Set.empty
-
-let beaconsInY targetY =
-    beacons
     |> Set.filter (fun (_, y) -> y = targetY)
 
 let calcPositionsInRange targetY sensor =
@@ -54,13 +51,79 @@ let calcPositionsInRange targetY sensor =
         |> (loop (fun x -> x + 1) targetPos)
     else Set.empty
 
-let calcNumberOfTakenPositions targetY =
+let calcNumberOfTakenPositionsAt targetY =
     sensorsWithDistance
-    |> List.toArray
-    |> Array.Parallel.map (calcPositionsInRange targetY)
-    |> Array.reduce (fun a b -> Set.union a b)
+    |> List.map (calcPositionsInRange targetY)
+    |> List.reduce (fun a b -> Set.union a b)
     |> (fun s -> Set.difference s (beaconsInY targetY))
     |> Set.count
 
-calcNumberOfTakenPositions 2000000
-|> printfn "Part1: %A"
+// calcNumberOfTakenPositionsAt 2000000
+// |> printfn "Part1: %A"
+
+// let calcTuningFrequencyForDistressBeacon max =
+//     let sensorsAndBeacons =
+//         sensorsWithBeacon
+//         |> List.fold
+//             (fun acc (sensor, beacon) -> 
+//                 acc |> Map.add sensor 'S' |> Map.add beacon 'B')
+//             Map.empty
+    
+//     let notSensorOrBeacon pos = not (Map.containsKey pos sensorsAndBeacons)
+
+//     let calcBoundary ((x, y), distance) = 
+//         let rec loop compare increase ((lx, rx), y') r =
+//             if compare y y' 
+//             then loop compare increase ((lx - 1, rx + 1), increase y') ((lx, y')::(rx, y')::r)
+//             else r
+//         [(x, y + distance + 1); (x, y - distance - 1)]
+//         |> loop (fun a b -> a <= b) (fun y' -> y' - 1) ((x - 1, x + 1), y + distance)
+//         |> loop (fun a b -> a > b) (fun y' -> y' + 1) ((x - 1, x + 1), y - distance)
+//         |> List.filter (fun (x, y) -> 0 <= x && x <= max && 0 <= y && y <= max && (notSensorOrBeacon (x, y)))
+
+//     sensorsWithDistance
+//     |> List.map calcBoundary
+//     |> List.fold 
+//         (fun acc positions -> 
+//             positions
+//             |> List.fold
+//                 (fun m pos -> 
+//                     Map.change
+//                         pos
+//                         (function
+//                         | Some n -> Some (n + 1)
+//                         | None -> Some 1)
+//                         m)
+//                 acc)
+//         Map.empty
+//     |> Map.toList
+//     |> List.sortByDescending (fun (_, n) -> n)
+//     |> List.head
+//     |> (fun ((x, y), _) -> (uint x) * 4000000u + (uint y))
+
+let calcTuningFrequencyForDistressBeacon max =
+    // let calcArea ((x, y), distance) = 
+    //     let rec loop compare increase ((lx, rx), y') r =
+    //         if compare y y' 
+    //         then loop compare increase ((lx - 1, rx + 1), increase y') (((lx, rx), y')::r)
+    //         else r
+    //     []
+    //     |> loop (fun a b -> a <= b) (fun y' -> y' - 1) ((x, x), y + distance)
+    //     |> loop (fun a b -> a > b) (fun y' -> y' + 1) ((x, x), y - distance)
+    //     |> List.filter (fun ((lx, rx), y') -> 0 <= y' && y' <= max && 0 <= rx && lx <= max)
+
+    let squares startPoint endPoint size =
+        seq {
+            for i in startPoint .. size .. endPoint do yield (i, size)
+        }
+    // let rec squares r size = function
+    //     | h::ts -> squares ((h, h + size)::(h + size, h)::r) size ts
+    //     | _ -> r
+
+    squares 0 max 5000
+    // |> List.skip 790
+    
+
+calcTuningFrequencyForDistressBeacon 4000000
+// calcTuningFrequencyForDistressBeacon 20
+|> printfn "Part2: %A"
