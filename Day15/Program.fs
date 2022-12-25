@@ -2,7 +2,7 @@
 open System.Text.RegularExpressions
 
 let input =
-    Path.Combine(Directory.GetCurrentDirectory(), "input.test.txt")
+    Path.Combine(Directory.GetCurrentDirectory(), "input.txt")
     |> File.ReadLines
 
 let calcDistance (x1, y1) (x2, y2) = abs(x1 - x2) + abs (y1 - y2)
@@ -102,27 +102,36 @@ let calcNumberOfTakenPositionsAt targetY =
 //     |> (fun ((x, y), _) -> (uint x) * 4000000u + (uint y))
 
 let calcTuningFrequencyForDistressBeacon max =
-    // let calcArea ((x, y), distance) = 
-    //     let rec loop compare increase ((lx, rx), y') r =
-    //         if compare y y' 
-    //         then loop compare increase ((lx - 1, rx + 1), increase y') (((lx, rx), y')::r)
-    //         else r
-    //     []
-    //     |> loop (fun a b -> a <= b) (fun y' -> y' - 1) ((x, x), y + distance)
-    //     |> loop (fun a b -> a > b) (fun y' -> y' + 1) ((x, x), y - distance)
-    //     |> List.filter (fun ((lx, rx), y') -> 0 <= y' && y' <= max && 0 <= rx && lx <= max)
+    let isCovered ((tx, ty), (bx, by)) (sensor, distance) =
+        if tx = bx && bx = by
+        then [(tx,ty)]
+        else [(tx, ty); (bx, ty); (tx, by); (bx, by)]
+        |> List.forall (fun pos -> calcDistance sensor pos <= distance)
+        
+    let divideArea ((tx, ty), (bx, by)) =
+        if tx = bx && ty = by
+        then []
+        else
+            let mx = (tx + bx) / 2
+            let my = (ty + by) / 2
+            if bx - tx > 2
+            then [((tx, ty), (mx, my)); ((mx + 1, ty), (bx, my)); ((tx, my + 1), (mx, by)); ((mx + 1, my + 1), (bx, by));]
+            else [ for i in tx .. bx do for j in ty .. by -> ((i, j), (i, j)) ] 
 
-    let squares startPoint endPoint size =
-        seq {
-            for i in startPoint .. size .. endPoint do yield (i, size)
-        }
-    // let rec squares r size = function
-    //     | h::ts -> squares ((h, h + size)::(h + size, h)::r) size ts
-    //     | _ -> r
+    let rec loop ls =
+        let areas = 
+            ls 
+            |> List.map divideArea 
+            |> List.collect id
+            |> List.filter (fun area -> sensorsWithDistance |> List.exists (isCovered area) |> not)
 
-    squares 0 max 5000
-    // |> List.skip 790
-    
+        if List.isEmpty areas
+        then List.head ls
+        else loop areas
+
+    [((0, 0), (max, max))]
+    |> loop
+    |> (fun ((x, y), _) -> (uint x) * 4000000u + (uint y))    
 
 calcTuningFrequencyForDistressBeacon 4000000
 // calcTuningFrequencyForDistressBeacon 20
